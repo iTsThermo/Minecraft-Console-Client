@@ -1,43 +1,39 @@
 #undef UNICODE
 
 #include <ws2tcpip.h>
-#include <stdio.h>
-
-#include "read_write_varint_varlong.h"
+#include <cstdio>
 
 #pragma comment (lib, "Ws2_32.lib")
 
 #define WIN32_LEAN_AND_MEAN
-#include <iostream>
+#include <cstdint>
+#include <sstream>
 #include <windows.h>
-#include <winsock2.h>
+
+#include "handshake.h"
+
 
 #pragma comment (lib, "Mswsock.lib")
 #pragma comment (lib, "AdvApi32.lib")
 
-#define DEFAULT_BUFLEN 25565
+#define DEFAULT_BUFLEN 1024
 #define DEFAULT_PORT "25565"
 
-int __cdecl main(int argc, char **argv)
+int __cdecl main(const int argc, char **argv)
 {
     WSADATA wsaData;
-    SOCKET ConnectSocket = INVALID_SOCKET;
+    auto ConnectSocket = INVALID_SOCKET;
 
     // Declare pointers to a structure that will hold the server's address information
-    struct addrinfo *result = NULL,
-                    *ptr = NULL,
-                    hints;
-
-    char recvbuf[DEFAULT_BUFLEN];
-    int iResult;
-    int recvbuflen = DEFAULT_BUFLEN;
+    addrinfo *result = nullptr,
+            hints{};
 
     if (argc != 2) {
         printf("usage: %s server-name\n", argv[0]);
         return 1;
     }
 
-    iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+    int iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
 
     if (iResult != 0) {
         printf("WSAStartup failed with error: %d\n", iResult);
@@ -58,18 +54,18 @@ int __cdecl main(int argc, char **argv)
     }
 
     // Attempt to connect to one of the addresses returned by getaddrinfo
-    for (ptr = result; ptr != NULL; ptr = ptr->ai_next) {
+    for (const addrinfo *ptr = result; ptr != nullptr; ptr = ptr->ai_next) {
         // Create a SOCKET for connecting to the server using the address information from getaddrinfo
         ConnectSocket = socket(ptr->ai_family, ptr->ai_socktype, ptr->ai_protocol);
 
         if (ConnectSocket == INVALID_SOCKET) {
-            printf("socket failed with error: %ld\n", WSAGetLastError());
+            printf("socket failed with error: %d\n", WSAGetLastError());
             WSACleanup();
             return 1;
         }
 
         // Attempt to connect the socket to the server
-        iResult = connect(ConnectSocket, ptr->ai_addr, (int)ptr->ai_addrlen);
+        iResult = connect(ConnectSocket, ptr->ai_addr, static_cast<int>(ptr->ai_addrlen));
 
         // Check if the connection failed
         if (iResult == SOCKET_ERROR) {
@@ -93,32 +89,40 @@ int __cdecl main(int argc, char **argv)
     }
 
     const char * server_address = "cosmicsky.com";
-    short server_port = 25565;
-
-    char * buffer = new char[1024];
-    int bytes_written = read_write_varint_varlong::write_var_int(0, buffer);
-    bytes_written += read_write_varint_varlong::write_var_int(765, buffer + bytes_written);
-    // write string length as var int
-    bytes_written += read_write_varint_varlong::write_var_int(strlen(server_address), buffer + bytes_written);
-    // write string
-    memcpy(buffer + bytes_written, server_address, strlen(server_address));
-    bytes_written += strlen(server_address);
-
-    // write port as short
-    memcpy(buffer + bytes_written, &server_port, 2);
-    bytes_written += 2;
-
-    buffer[bytes_written++] = 1;
-
-    char * length_buffer = new char[1024];
-    int length_bytes_written = read_write_varint_varlong::write_var_int(bytes_written, &*length_buffer);
-
-    iResult = send(ConnectSocket, buffer, length_bytes_written, 0);
-
-    if (iResult == -1) {
-        printf("Error Occurred while sending packets.");
-        return -1;
-    }
+    unsigned short server_port = 25565;
+    int protocal = 765;
+    handshake handshake_obj;
+    handshake_obj.create_handshake_packet(ConnectSocket, server_address, server_port, protocal, iResult);
+    // char * buffer = new char[1024];
+    //
+    // int bytes_written = read_write_varint_varlong::write_var_int(0, buffer);
+    // bytes_written += read_write_varint_varlong::write_var_int(765, buffer + bytes_written);
+    // // write string length as var int
+    // bytes_written += read_write_varint_varlong::write_var_int(strlen(server_address), buffer + bytes_written);
+    // // write string
+    // memcpy(buffer + bytes_written, server_address, strlen(server_address));
+    // bytes_written += strlen(server_address);
+    //
+    // // write port as short
+    // memcpy(buffer + bytes_written, &server_port, 2);
+    // bytes_written += 2;
+    //
+    // //Next-State - Status
+    // bytes_written += read_write_varint_varlong::write_var_int(1, buffer + bytes_written);
+    //
+    // char * length_buffer = new char[1024];
+    // int length_bytes_written = read_write_varint_varlong::write_var_int(bytes_written, &*length_buffer);
+    //
+    // iResult = send(ConnectSocket, length_buffer, length_bytes_written, 0);
+    // if (iResult == -1) {
+    //     printf("Error Occurred while sending packets - HandShake length");
+    //     return -1;
+    // }
+    // iResult = send(ConnectSocket, buffer, bytes_written, 0);
+    // if (iResult == -1) {
+    //     printf("Error Occurred while sending packets - Handshake data");
+    //     return -1;
+    // }
 
     // if (obj->write_exact(SD_SEND, length_bytes_written, *length_buffer) == -1)
     //     return -1;
@@ -135,6 +139,8 @@ int __cdecl main(int argc, char **argv)
     }
 
     do {
+        int recvbuflen = DEFAULT_BUFLEN;
+        char * recvbuf = new char[DEFAULT_BUFLEN];
         // Receive data into the receive buffer
         iResult = recv(ConnectSocket, recvbuf, recvbuflen, 0);
 

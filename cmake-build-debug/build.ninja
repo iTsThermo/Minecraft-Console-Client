@@ -61,8 +61,8 @@ build CMakeFiles/MyProject.dir/read_write_varint_varlong.cpp.obj: CXX_COMPILER__
   OBJECT_DIR = CMakeFiles\MyProject.dir
   OBJECT_FILE_DIR = CMakeFiles\MyProject.dir
 
-build CMakeFiles/MyProject.dir/client.cpp.obj: CXX_COMPILER__MyProject_unscanned_Debug C$:/Users/Vansh/CLionProjects/MinecraftCC/client.cpp || cmake_object_order_depends_target_MyProject
-  DEP_FILE = CMakeFiles\MyProject.dir\client.cpp.obj.d
+build CMakeFiles/MyProject.dir/handshake.cpp.obj: CXX_COMPILER__MyProject_unscanned_Debug C$:/Users/Vansh/CLionProjects/MinecraftCC/handshake.cpp || cmake_object_order_depends_target_MyProject
+  DEP_FILE = CMakeFiles\MyProject.dir\handshake.cpp.obj.d
   FLAGS = -g -std=gnu++17 -fdiagnostics-color=always
   OBJECT_DIR = CMakeFiles\MyProject.dir
   OBJECT_FILE_DIR = CMakeFiles\MyProject.dir
@@ -75,7 +75,7 @@ build CMakeFiles/MyProject.dir/client.cpp.obj: CXX_COMPILER__MyProject_unscanned
 #############################################
 # Link the executable MyProject.exe
 
-build MyProject.exe: CXX_EXECUTABLE_LINKER__MyProject_Debug CMakeFiles/MyProject.dir/main.cpp.obj CMakeFiles/MyProject.dir/read_write_varint_varlong.cpp.obj CMakeFiles/MyProject.dir/client.cpp.obj
+build MyProject.exe: CXX_EXECUTABLE_LINKER__MyProject_Debug CMakeFiles/MyProject.dir/main.cpp.obj CMakeFiles/MyProject.dir/read_write_varint_varlong.cpp.obj CMakeFiles/MyProject.dir/handshake.cpp.obj
   FLAGS = -g
   LINK_LIBRARIES = -lws2_32  -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
   OBJECT_DIR = CMakeFiles\MyProject.dir
