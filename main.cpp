@@ -4,7 +4,6 @@
 #include <stdio.h>
 
 #include "read_write_varint_varlong.h"
-#include "client.h"
 
 #pragma comment (lib, "Ws2_32.lib")
 

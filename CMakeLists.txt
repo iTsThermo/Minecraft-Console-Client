@@ -9,7 +9,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_executable(MyProject main.cpp
         read_write_varint_varlong.cpp
         read_write_varint_varlong.h
-        client.cpp
-        client.h)
+)
 
 target_link_libraries(MyProject ws2_32)
